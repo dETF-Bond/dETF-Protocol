@@ -1,0 +1,78 @@
+import "./Ownable.sol";
+
+pragma solidity >=0.4.22 <0.8.0;
+
+contract Airdrop is Ownable {
+    using SafeMath for *;
+    
+    DETF public dETFContract;
+    
+    mapping (address => bool) halfWhitelist;
+    mapping (address => bool) fullWhiteList;
+    mapping (address => bool) fullClaim;
+    mapping (address => bool) halfClaim;
+    
+    
+    constructor(DETF _dETFContract) {
+        dETFContract = _dETFContract;
+    }
+    
+    function checkStatus(address user) public view returns (uint) {
+        if (fullWhiteList[user] == true) {
+            return 2;
+        } else if (halfWhitelist[user] == true) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    
+    function checkClaim(address user) public view returns (bool, bool) {
+        bool half = false;
+        bool full = false;
+        if (fullClaim[user] == true) {
+            full = true;
+        } else if (halfClaim[user] == true) {
+            half = true;
+        }
+        return (half, full);
+    }
+    
+    function addHalfWhitelist(address[] memory accounts) public onlyOwner {
+        for (uint i = 0; i < accounts.length; i++) {
+            halfWhitelist[accounts[i]] = true;
+        }
+    }
+    
+    function removeHalfWhitelist(address[] memory accounts) public onlyOwner {
+        for (uint i = 0; i < accounts.length; i++) {
+            halfWhitelist[accounts[i]] = false;
+        }
+    }
+    
+    function addFullWhitelist(address[] memory accounts) public onlyOwner {
+        for (uint i = 0; i < accounts.length; i++) {
+            fullWhiteList[accounts[i]] = true;
+        }
+    }
+    
+    function removeFullWhitelist(address[] memory accounts) public onlyOwner {
+        for (uint i = 0; i < accounts.length; i++) {
+            fullWhiteList[accounts[i]] = false;
+        }
+    }
+    
+    function claimAirdrop() public {
+        if (fullWhiteList[msg.sender] == true && fullClaim[msg.sender] == false) {
+            dETFContract.transfer(msg.sender, 5.mul(10.pow(17)));
+            fullWhiteList[msg.sender] = false;
+            fullClaim[msg.sender] = true;
+        } 
+        
+        if (halfWhitelist[msg.sender] == true && halfClaim[msg.sender] == false) {
+            dETFContract.transfer(msg.sender, 5.mul(10.pow(17)));
+            halfWhitelist[msg.sender] = false;
+            halfClaim[msg.sender] = true;
+        } 
+    }
+}
